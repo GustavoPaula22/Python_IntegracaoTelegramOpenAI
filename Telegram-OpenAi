@@ -1,0 +1,45 @@
+import telebot
+import openai
+import json
+import requests
+import telepot
+from telepot.loop import MessageLoop
+
+
+API_KEY = 'Seu token OpenAI'
+tokenT = 'Seu token bot telegram'
+
+
+openai.api_key = API_KEY
+bot = telebot.TeleBot(tokenT)
+
+
+@bot.message_handler(commands=['chat'])
+def handle_chat(menssagem):
+    pergunta = menssagem.text[6:]
+    resposta = openai.Completion.create(engine="text-davinci-002", prompt=pergunta, max_tokens=1024)
+    responder = resposta['choices'][0]['text']
+    bot.send_message(menssagem.chat.id, responder)
+
+
+@bot.message_handler(commands=['start'])
+def handle_start(menssagem):
+    bot.send_message(menssagem.chat.id, "Olá, eu sou o GuGu Bot.")
+
+
+@bot.message_handler(commands=['dall'])
+def handle_image(menssagem):
+    # Converter a menssagem do bot do telegram para um formato mais simples para o ChatGpt conseguir interpretar    query = menssagem.text
+    # Set the endpoint URL for DALL-E    url = "https://api.openai.com/v1/images/generations"    # Set the headers for the request    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}"    }
+    # Set the parameters for the request    data = {
+        "prompt": query,
+        "model": "image-alpha-001"    }
+    # Send the request to the DALL-E API    response = requests.post(url, headers=headers, json=data)
+    # Parse the JSON response    json_response = json.loads(response.text)
+    # Get the URL of the generated image    image_url = json_response["data"][0]["url"]
+    # Send the image to the user    bot.send_photo(chat_id=menssagem.chat.id, photo=image_url)
+    
+
+bot.polling()
